@@ -98,26 +98,28 @@ public class MergeableClusterInvoker<T> implements Invoker<T> {
         List<Result> resultList = new ArrayList<Result>( results.size() );
         
         int timeout = getUrl().getMethodParameter( invocation.getMethodName(), Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT );
-        for ( Map.Entry<String, Future<Result>> entry : results.entrySet() ) {
-            Future<Result> future = entry.getValue();
+        for (Invoker<T> invoker : invokers){
+            String serviceKey = invoker.getUrl().getServiceKey();
+            Future<Result> future = results.get(invoker.getUrl().getServiceKey());
             try {
                 Result r = future.get(timeout, TimeUnit.MILLISECONDS);
+
                 if (r.hasException()) {
                     log.error(new StringBuilder(32).append("Invoke ")
-                                  .append(getGroupDescFromServiceKey(entry.getKey()))
-                                  .append(" failed: ")
-                                  .append(r.getException().getMessage()).toString(),
-                              r.getException());
+                                    .append(getGroupDescFromServiceKey(serviceKey))
+                                    .append(" failed: ")
+                                    .append(r.getException().getMessage()).toString(),
+                            r.getException());
                 } else {
                     resultList.add(r);
                 }
             } catch ( Exception e ) {
                 throw new RpcException( new StringBuilder( 32 )
-                                                .append( "Failed to invoke service " )
-                                                .append( entry.getKey() )
-                                                .append( ": " )
-                                                .append( e.getMessage() ).toString(),
-                                        e );
+                        .append( "Failed to invoke service " )
+                        .append( serviceKey )
+                        .append( ": " )
+                        .append( e.getMessage() ).toString(),
+                        e );
             }
         }
         

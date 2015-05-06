@@ -101,4 +101,28 @@ public class ResultMergerTest {
         }
         
     }
+
+    @Test
+    public void testObjectArrayMerger() throws Exception {
+        Object[] stringArray1 = {"1", "2", "3"};
+        Object[] stringArray2 = {"4", "5", "6"};
+        Object[] stringArray3 = {};
+
+        Object result = ArrayMerger.INSTANCE.merge(stringArray1, stringArray2, stringArray3);
+        Assert.assertTrue(result.getClass().isArray());
+        Assert.assertEquals(6, Array.getLength(result));
+        Assert.assertTrue(String.class.isInstance(Array.get(result, 0)));
+        for(int i = 0; i < 6; i++) {
+            Assert.assertEquals(String.valueOf(i + 1), Array.get(result, i));
+        }
+
+        result = MergerFactory.getMerger(Object[].class).merge(stringArray1, stringArray2, stringArray3);
+        Assert.assertTrue(result.getClass().isArray());
+        Assert.assertEquals(6, Array.getLength(result));
+        Assert.assertTrue(Object.class == result.getClass().getComponentType());
+        for (int i = 0; i < 6; i++) {
+            Assert.assertEquals(String.valueOf(i + 1), Array.get(result, i));
+        }
+
+    }
 }
