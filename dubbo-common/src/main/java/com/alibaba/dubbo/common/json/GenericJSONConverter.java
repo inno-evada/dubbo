@@ -114,9 +114,10 @@ public class GenericJSONConverter implements JSONConverter
 			for( String pn : pns )
 			{
 				if ((obj instanceof Throwable) && (
-						"localizedMessage".equals(pn) 
-						|| "cause".equals(pn) 
-						|| "stackTrace".equals(pn))) {
+						"localizedMessage".equals(pn)
+							|| "cause".equals(pn)
+							|| "stackTrace".equals(pn)
+							|| "suppressed".equals(pn))) {
 					continue;
 				}
 				

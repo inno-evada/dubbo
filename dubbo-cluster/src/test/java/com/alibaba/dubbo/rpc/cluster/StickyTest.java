@@ -46,7 +46,15 @@ public class StickyTest {
     Directory<StickyTest> dic ;
     Result result = new RpcResult();
     StickyClusterInvoker<StickyTest> clusterinvoker = null;
-    
+
+    URL url = URL.valueOf("test://test:11/test?"
+                    +"&loadbalance=roundrobin"
+//            +"&"+Constants.CLUSTER_AVAILABLE_CHECK_KEY+"=true"
+                    +"&"+Constants.CLUSTER_STICKY_KEY+"=true"
+    );
+
+    private static final int RUNS = 1;
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
     }
@@ -55,58 +63,54 @@ public class StickyTest {
     public void setUp() throws Exception {
         dic = EasyMock.createMock(Directory.class);
         invocation = new RpcInvocation();
-        
+
         EasyMock.expect(dic.getUrl()).andReturn(url).anyTimes();
         EasyMock.expect(dic.list(invocation)).andReturn(invokers).anyTimes();
         EasyMock.expect(dic.getInterface()).andReturn(StickyTest.class).anyTimes();
         EasyMock.replay(dic);
         invokers.add(invoker1);
         invokers.add(invoker2);
-        
+
         clusterinvoker = new StickyClusterInvoker<StickyTest>(dic);
     }
-    URL url = URL.valueOf("test://test:11/test?" 
-            +"&loadbalance=roundrobin"
-//            +"&"+Constants.CLUSTER_AVAILABLE_CHECK_KEY+"=true"
-            +"&"+Constants.CLUSTER_STICKY_KEY+"=true"
-            );
-    
-    int runs = 1;
     @Test
     public void testStickyNoCheck() {
-        int count = testSticky(null,false);
-        System.out.println(count);
-        Assert.assertTrue(count>0 && count <=runs);
+        Invoker<StickyTest> invokerFirst = testSticky(null,false);
+        Invoker<StickyTest> invokerSecond = testSticky(null,false);
+        Assert.assertNotSame(invokerFirst, invokerSecond);
     }
     
     @Test
     public void testStickyForceCheck() {
-        int count = testSticky(null,true);
-        Assert.assertTrue(count == 0 || count  == runs);
+        Invoker<StickyTest> invokerFirst = testSticky(null,true);
+        Invoker<StickyTest> invokerSecond = testSticky(null,true);
+        Assert.assertSame(invokerFirst, invokerSecond);
     }
+
     @Test
     public void testMethodStickyNoCheck() {
-        int count = testSticky("method1",false);
-        System.out.println(count);
-        Assert.assertTrue(count>0 && count <=runs);
+        Invoker<StickyTest> invokerFirst = testSticky("method1",false);
+        Invoker<StickyTest> invokerSecond = testSticky("method1",false);
+        Assert.assertNotSame(invokerFirst, invokerSecond);
     }
-    
+
     @Test
     public void testMethodStickyForceCheck() {
-        int count = testSticky("method1",true);
-        Assert.assertTrue(count == 0 || count  == runs);
+        Invoker<StickyTest> invokerFirst = testSticky("method1",true);
+        Invoker<StickyTest> invokerSecond = testSticky("method1",true);
+        Assert.assertSame(invokerFirst, invokerSecond);
     }
-    
+
     @Test
     public void testMethodsSticky() {
         for(int i = 0 ;i<100 ; i++){//多次调用看两个方法是否都选在同一个invoker
-            int count1 = testSticky("method1",true);
-            int count2 = testSticky("method2",true);
-            Assert.assertTrue(count1 == count2);
+            Invoker<StickyTest> invokerFirst = testSticky("method1",true);
+            Invoker<StickyTest> invokerSecond = testSticky("method2",true);
+            Assert.assertSame(invokerFirst, invokerSecond);
         }
     }
     
-    public int testSticky(String methodName, boolean check) {
+    public Invoker<StickyTest> testSticky(String methodName, boolean check) {
         if (methodName == null){
             url = url.addParameter(Constants.CLUSTER_STICKY_KEY, String.valueOf(check));
         }else {
@@ -127,15 +131,9 @@ public class StickyTest {
         EasyMock.replay(invoker2);
         
         invocation.setMethodName(methodName);
-        
-        int count = 0;
-        for (int i = 0; i < runs; i++) {
-            Assert.assertEquals(null, clusterinvoker.invoke(invocation));
-            if(invoker1 == clusterinvoker.getSelectedInvoker()){
-                count ++;
-            }
-        }
-        return count;
+
+        Assert.assertEquals(null, clusterinvoker.invoke(invocation));
+        return clusterinvoker.getSelectedInvoker();
     }
     
     

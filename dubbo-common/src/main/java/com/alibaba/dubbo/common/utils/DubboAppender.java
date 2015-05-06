@@ -33,6 +33,7 @@ public class DubboAppender extends ConsoleAppender {
     
     public static void doStop() {
         available = false;
+        clear();
     }
     
     public static void clear() {

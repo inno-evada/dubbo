@@ -33,22 +33,15 @@ public class MergerFactory {
             new ConcurrentHashMap<Class<?>, Merger<?>>();
 
     public static <T> Merger<T> getMerger(Class<T> returnType) {
-        Merger result;
+        Merger result = mergerCache.get(returnType);
+        if (result == null) {
+            loadMergers();
+            result = mergerCache.get(returnType);
+        }
         if (returnType.isArray()) {
             Class type = returnType.getComponentType();
-            result = mergerCache.get(type);
-            if (result == null) {
-                loadMergers();
-                result = mergerCache.get(type);
-            }
             if(result == null && ! type.isPrimitive()) {
                 result = ArrayMerger.INSTANCE;
-            }
-        } else {
-            result = mergerCache.get(returnType);
-            if (result == null) {
-                loadMergers();
-                result = mergerCache.get(returnType);
             }
         }
         return result;

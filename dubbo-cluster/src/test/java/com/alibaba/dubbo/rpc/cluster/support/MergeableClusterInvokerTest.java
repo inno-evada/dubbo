@@ -23,6 +23,7 @@ import com.alibaba.dubbo.rpc.Result;
 import com.alibaba.dubbo.rpc.RpcResult;
 import com.alibaba.dubbo.rpc.cluster.Directory;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,7 +87,7 @@ public class MergeableClusterInvokerTest {
             } );
         }
     };
-    
+    private Map<String, List<String>> expected = new HashMap<String, List<String>>();
     private Menu firstMenu = new Menu( firstMenuMap );
     private Menu secondMenu = new Menu( secondMenuMap );
     
@@ -97,11 +98,19 @@ public class MergeableClusterInvokerTest {
     @Before
     public void setUp() throws Exception {
 
+        merge( expected, firstMenuMap );
+        merge( expected, secondMenuMap );
+
         directory = EasyMock.createMock( Directory.class );
         firstInvoker = EasyMock.createMock( Invoker.class );
         secondInvoker = EasyMock.createMock( Invoker.class );
         invocation = EasyMock.createMock( Invocation.class );
 
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        expected.clear();
     }
 
     @Test
@@ -165,11 +174,9 @@ public class MergeableClusterInvokerTest {
 
         // invoke
         Result result = mergeableClusterInvoker.invoke( invocation );
-        Assert.assertTrue( result.getValue() instanceof Menu );
+        Assert.assertTrue(result.getValue() instanceof Menu);
         Menu menu = ( Menu ) result.getValue();
-        Map<String, List<String>> expected = new HashMap<String, List<String>>();
-        merge( expected, firstMenuMap );
-        merge( expected, secondMenuMap );
+
         Assert.assertEquals( expected, menu.getMenus() );
 
     }
@@ -232,10 +239,11 @@ public class MergeableClusterInvokerTest {
     static void merge( Map<String, List<String>> first, Map<String, List<String>> second ) {
         for( Map.Entry<String, List<String>> entry : second.entrySet() ) {
             List<String> value = first.get( entry.getKey() );
+            List<String> items = new ArrayList<String>(entry.getValue());
             if ( value != null ) {
-                value.addAll( entry.getValue() );
+                value.addAll( items );
             } else {
-                first.put( entry.getKey(), entry.getValue() );
+                first.put( entry.getKey(), items );
             }
         }
     }

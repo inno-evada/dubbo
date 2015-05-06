@@ -105,7 +105,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
             if ( stickyInvoker != null && !invokers.contains(stickyInvoker) ){
                 stickyInvoker = null;
             }
-            //ignore cucurrent problem
+            //TODO: ignore cucurrent problem
             if (sticky && stickyInvoker != null && (selected == null || !selected.contains(stickyInvoker))){
                 if (availablecheck && stickyInvoker.isAvailable()){
                     return stickyInvoker;
